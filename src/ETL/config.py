@@ -9,8 +9,12 @@ BRONZE_DIR = DATA_DIR / "bronze"
 SILVER_DIR = DATA_DIR / "silver"
 GOLD_DIR = DATA_DIR / "gold"
 
-# Sources
-SOURCES = ("customers", "products", "orders")
+# Sources and the columns each raw file must have
+SOURCES = {
+    "customers": ["CustomerID", "Country"],
+    "products": ["StockCode", "Description", "UnitPrice"],
+    "orders": ["InvoiceNo", "StockCode", "Quantity", "InvoiceDate", "CustomerID"],
+}
 
 CSV_OPTIONS = {
     "header": "true",
