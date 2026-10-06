@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+env/
+.venv/
+venv/
+ENV/
+
+# Test, type check, and coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# PySpark / local Spark
+metastore_db/
+spark-warehouse/
+derby.log
+*.lck
+checkpoint/
+checkpoints/
+spark-logs/
+.spark-staging*/
+spark-events/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Microsoft Office lock files
+~$*
