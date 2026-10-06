@@ -70,3 +70,8 @@ Thumbs.db
 
 # Microsoft Office lock files
 ~$*
+
+# Data 
+data/bronze/
+data/silver/
+data/gold/
