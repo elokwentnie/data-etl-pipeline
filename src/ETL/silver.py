@@ -5,7 +5,7 @@ from ETL import cleaning, config
 
 def read_bronze_data(spark: SparkSession, table: str) -> DataFrame:
     "Read one bronze table into a dataframe"
-    path = str(config.BRONZE_PATH / f"{table}.{config.OUTPUT_FORMAT}")
+    path = str(config.BRONZE_DIR / f"{table}.{config.OUTPUT_FORMAT}")
     return spark.read.format(config.OUTPUT_FORMAT).load(path)
 
 def clean_customers(df: DataFrame) -> DataFrame:
@@ -36,13 +36,41 @@ def clean_orders(df: DataFrame) -> DataFrame:
         "line_type", cleaning.line_type(F.col("invoice_no"), F.col("quantity"))
     )
 
+def check_not_null(df: DataFrame, table: str, columns: list[str]) -> None:
+    "Fail if any of the required columns in a table are null"
+    null_columns = [
+        col for col in columns if df.filter(F.col(col).isNull()).limit(1).count()
+    ]
+    if null_columns:
+        raise ValueError(f"Table: {table} has nulls in {null_columns}")
+
+
+def write_silver_data(spark: SparkSession, df: DataFrame, table: str) -> None:
+    "Write a dataframe to silver layer"
+    path = str(config.SILVER_DIR / f"{table}.{config.OUTPUT_FORMAT}")
+    df.write.format(config.OUTPUT_FORMAT).mode("overwrite").save(path)
 
 CLEANERS = {
     "customers": clean_customers,
     "products": clean_products,
+    "orders": clean_orders,
 }
 
 REQUIRED_COLUMNS = {
     "customers": ["customer_id", "country"],
     "products": ["stock_code", "unit_price"], # we accept null as a description, it will be resolved in gold layer
+    "orders": ["invoice_no", "stock_code", "quantity", "invoice_ts", "line_type"],
 }
+
+
+def run(spark: SparkSession) -> None:
+    "Transform the data from bronze to silver"
+    for table, cleaner in CLEANERS.items():
+        df = read_bronze_data(spark, table)
+        df = cleaner(df)
+        check_not_null(df, table, REQUIRED_COLUMNS[table])
+        write_silver_data(spark, df, table)
+
+if __name__ == "__main__":
+    from ETL.spark import get_spark
+    run(get_spark())
