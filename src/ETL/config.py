@@ -49,3 +49,6 @@ COUNTRY_MAP = {
     "Unspecified": UNKNOWN,
     "European Community": UNKNOWN,
 }
+
+# Gold layer
+UNKNOWN_KEY = -1
