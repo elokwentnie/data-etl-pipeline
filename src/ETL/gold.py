@@ -10,7 +10,7 @@ def read_silver_data(spark: SparkSession, table: str) -> DataFrame:
     return spark.read.format(config.OUTPUT_FORMAT).load(path)
 
 
-def add_key(df: DataFrame, key: str, natural_key: str) -> DataFrame:
+def add_key(df: DataFrame, key: str, natural_key: str | list[str]) -> DataFrame:
     "Add a surrogate key 1..n in natural key order, reruns will give the same keys."
     window = Window.orderBy(natural_key)
     return df.select(F.row_number().over(window).alias(key), "*")
@@ -71,24 +71,54 @@ def build_dim_date(orders: DataFrame) -> DataFrame:
         (F.weekday("date") >= 5).alias("is_weekend"),
     )
 
+def build_fact_sales(
+    orders: DataFrame, dim_customer: DataFrame, dim_product: DataFrame) -> DataFrame:
+    "One row per order line, with dimension keys and the chosen price"
+
+    customers = dim_customer.select("customer_id", "customer_key")
+    products = dim_product.select("stock_code", "product_key", "unit_price")
+
+    fact = (
+        orders.join(customers, "customer_id", "left")
+        .join(products, "stock_code", "left")
+        .select(
+            "invoice_no",
+            "line_type",
+            F.date_format("invoice_ts", "yyyyMMdd").cast("int").alias("date_key"),
+            F.coalesce("customer_key", F.lit(config.UNKNOWN_KEY)).alias("customer_key"),
+            F.coalesce("product_key", F.lit(config.UNKNOWN_KEY)).alias("product_key"),
+            "invoice_ts",
+            "quantity",
+            "unit_price",
+            (F.col("quantity") * F.col("unit_price")).cast("decimal(12,2)").alias("line_amount"),
+        )
+    )
+    line_order = ["invoice_no", "product_key", "invoice_ts", "quantity", "customer_key"]
+    return add_key(fact, "sales_key", line_order)
+
 def write_gold_data(df: DataFrame, table: str) -> None:
     "Write a dataframe to the gold layer"
     path = str(config.GOLD_DIR / f"{table}.{config.OUTPUT_FORMAT}")
     df.write.format(config.OUTPUT_FORMAT).mode("overwrite").save(path)
 
 def run(spark: SparkSession) -> None:
-    "Build the gold dimensions from silver."
+    "Build the gold dimensions from silver and the sales fact table."
+
+    orders = read_silver_data(spark, "orders")
 
     dim_customer = build_dim_customer(read_silver_data(spark, "customers"))
     dim_product = build_dim_product(read_silver_data(spark, "products"))
     dim_date = build_dim_date(read_silver_data(spark, "orders"))
+    fact_sales = build_fact_sales(orders, dim_customer, dim_product)
 
-    dims = {
+    tables = {
         "dim_customer": dim_customer,
         "dim_product": dim_product,
         "dim_date": dim_date,
+        "fact_sales": fact_sales,
     }
-    for table, df in dims.items():
+    
+    for table, df in tables.items():
         write_gold_data(df, table)
 
 if __name__ == "__main__":
