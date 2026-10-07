@@ -36,3 +36,16 @@ SPARK_CONF = {
     "spark.sql.ansi.enabled": "true",
     "spark.sql.session.timeZone": "UTC",
 }
+
+
+# Cleaning rules
+UNKNOWN = "Unknown"
+INVOICE_TS_FORMAT = "M/d/yyyy H:mm"
+
+COUNTRY_MAP = {
+    "EIRE": "Ireland",
+    "USA": "United States",
+    "RSA": "South Africa",
+    "Unspecified": UNKNOWN,
+    "European Community": UNKNOWN,
+}
