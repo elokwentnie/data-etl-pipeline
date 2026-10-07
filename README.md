@@ -140,3 +140,7 @@ Some smaller things are not fixed yet:
 ## Use of AI
 
 I used Claude to speed up writing the unit tests and to prepare the READMEs and docs from my own notes and findings from the initial analysis. I reviewed and validated everything myself. I use it also to fix small issues when I was writing a code to not spend too much time on that. 
+
+## Additional comment
+
+I divided this task into smaller issues, that I initially reported in github issues, I tried to work on them one by one. All of that was done after the initial data exploration and preparing a draft plan which was later polished.
