@@ -23,6 +23,20 @@ def clean_products(df: DataFrame) -> DataFrame:
         F.col("UnitPrice").cast("decimal(10, 2)").alias("unit_price"),
     )
 
+def clean_orders(df: DataFrame) -> DataFrame:
+    "Orders, without duplicates, with a fixed timestamp and a line type"
+    orders = df.dropDuplicates(config.SOURCES["orders"]).select(
+        F.trim(F.col("InvoiceNo")).alias("invoice_no"),
+        cleaning.normalize_stock_code(F.col("StockCode")).alias("stock_code"),
+        F.col("Quantity").cast("int").alias("quantity"),
+        cleaning.parse_invoice_ts(F.col("InvoiceDate")).alias("invoice_ts"),
+        F.col("CustomerID").cast("int").alias("customer_id"),
+    )
+    return cleaning.fill_invoice_ts(orders).withColumn(
+        "line_type", cleaning.line_type(F.col("invoice_no"), F.col("quantity"))
+    )
+
+
 CLEANERS = {
     "customers": clean_customers,
     "products": clean_products,
