@@ -16,7 +16,7 @@ def clean_country(country: Column) -> Column:
         F.lit(list(config.COUNTRY_MAP.keys())),
         F.lit(list(config.COUNTRY_MAP.values())),
     )
-    return F.coalesce(F.try_element_at(mapping, name), F.lit(config.UNKNOWN))
+    return F.coalesce(F.try_element_at(mapping, name), name)
 
 
 def clean_description(description: Column) -> Column:
