@@ -33,6 +33,24 @@ def build_dim_customer(customers: DataFrame) -> DataFrame:
     )
     return dim.union(unknown)
 
+def build_dim_product(products: DataFrame) -> DataFrame:
+    "One row per stock code, with one description and one median price"
+    non_zero_price = F.when(F.col("unit_price") > 0, F.col("unit_price"))
+    dim = products.groupBy("stock_code").agg(
+        F.coalesce(
+            F.mode("description", deterministic=True),
+            F.lit(config.UNKNOWN),
+        ).alias("description"),
+        F.round(F.median(non_zero_price), 2).alias("unit_price"),
+        F.min(non_zero_price).alias("min_price"),
+        F.max(non_zero_price).alias("max_price"),
+    )
+    dim = add_key(dim, "product_key", "stock_code")
+    unknown = dim.sparkSession.createDataFrame(
+         [(config.UNKNOWN_KEY, config.UNKNOWN, config.UNKNOWN, None, None, None)], dim.schema
+    )
+    return dim.union(unknown)
+
 def write_gold_data(df: DataFrame, table: str) -> None:
     "Write a dataframe to the gold layer"
     path = str(config.GOLD_DIR / f"{table}.{config.OUTPUT_FORMAT}")
