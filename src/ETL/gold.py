@@ -51,15 +51,45 @@ def build_dim_product(products: DataFrame) -> DataFrame:
     )
     return dim.union(unknown)
 
+def build_dim_date(orders: DataFrame) -> DataFrame:
+    "One row per day, covering every month that has orders."
+    date_range = orders.select(
+        F.trunc(F.to_date(F.min("invoice_ts")), "month").alias("start"),
+        F.last_day(F.to_date(F.max("invoice_ts"))).alias("end"),
+    )
+    dates = date_range.select(F.explode(F.sequence("start", "end")).alias("date"))
+    return dates.select(
+        F.date_format("date", "yyyyMMdd").cast("int").alias("date_key"),
+        "date",
+        F.year("date").alias("year"),
+        F.quarter("date").alias("quarter"),
+        F.month("date").alias("month"),
+        F.date_format("date", "MMMM").alias("month_name"),
+        F.dayofmonth("date").alias("day_of_month"),
+        (F.weekday("date") + 1).alias("day_of_week"),
+        F.date_format("date", "EEEE").alias("day_name"),
+        (F.weekday("date") >= 5).alias("is_weekend"),
+    )
+
 def write_gold_data(df: DataFrame, table: str) -> None:
     "Write a dataframe to the gold layer"
     path = str(config.GOLD_DIR / f"{table}.{config.OUTPUT_FORMAT}")
     df.write.format(config.OUTPUT_FORMAT).mode("overwrite").save(path)
 
 def run(spark: SparkSession) -> None:
-    "Transform the data from silver to gold"
-    ...
-    #write_gold_data(df, table)
+    "Build the gold dimensions from silver."
+
+    dim_customer = build_dim_customer(read_silver_data(spark, "customers"))
+    dim_product = build_dim_product(read_silver_data(spark, "products"))
+    dim_date = build_dim_date(read_silver_data(spark, "orders"))
+
+    dims = {
+        "dim_customer": dim_customer,
+        "dim_product": dim_product,
+        "dim_date": dim_date,
+    }
+    for table, df in dims.items():
+        write_gold_data(df, table)
 
 if __name__ == "__main__":
     from ETL.spark import get_spark
