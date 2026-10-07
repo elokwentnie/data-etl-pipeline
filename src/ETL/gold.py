@@ -42,8 +42,8 @@ def build_dim_product(products: DataFrame) -> DataFrame:
             F.lit(config.UNKNOWN),
         ).alias("description"),
         F.round(F.median(non_zero_price), 2).alias("unit_price"),
-        F.min(non_zero_price).alias("min_price"),
-        F.max(non_zero_price).alias("max_price"),
+        F.min(non_zero_price).alias("price_min"),
+        F.max(non_zero_price).alias("price_max"),
     )
     dim = add_key(dim, "product_key", "stock_code")
     unknown = dim.sparkSession.createDataFrame(
