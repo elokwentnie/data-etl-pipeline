@@ -102,7 +102,7 @@ How `line_type` is set:
 | `description` | string | Product name. `Unknown` when there is no usable one. |
 | `unit_price` | decimal(10,2) | Median of the non-zero prices for the code. |
 | `price_min` | decimal(10,2) | Lowest non-zero price. |
-| `price_max` | decimal(10,2) | Highest price. |
+| `price_max` | decimal(10,2) | Highest non-zero price. |
 
 ### dim_date
 

@@ -41,7 +41,7 @@ def build_dim_product(products: DataFrame) -> DataFrame:
             F.mode("description", deterministic=True),
             F.lit(config.UNKNOWN),
         ).alias("description"),
-        F.round(F.median(non_zero_price), 2).alias("unit_price"),
+        F.round(F.median(non_zero_price), 2).cast("decimal(10,2)").alias("unit_price"),
         F.min(non_zero_price).alias("price_min"),
         F.max(non_zero_price).alias("price_max"),
     )
