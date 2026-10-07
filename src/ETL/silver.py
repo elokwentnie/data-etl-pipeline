@@ -15,10 +15,20 @@ def clean_customers(df: DataFrame) -> DataFrame:
         cleaning.clean_country(F.col("Country")).alias("country"),
     )
 
+def clean_products(df: DataFrame) -> DataFrame:
+    "Products with normalized codes. Notes are removed from the description."
+    return df.select(
+        cleaning.normalize_stock_code(F.col("StockCode")).alias("stock_code"),
+        cleaning.clean_description(F.col("Description")).alias("description"),
+        F.col("UnitPrice").cast("decimal(10, 2)").alias("unit_price"),
+    )
+
 CLEANERS = {
     "customers": clean_customers,
+    "products": clean_products,
 }
 
 REQUIRED_COLUMNS = {
     "customers": ["customer_id", "country"],
+    "products": ["stock_code", "unit_price"], # we accept null as a description, it will be resolved in gold layer
 }
